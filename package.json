@@ -1,0 +1,44 @@
+{
+  "name": "standing-picture-controller",
+  "version": "1.0.0",
+  "description": "ゲームパッド制御 立ち絵切替・演出アプリ",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "build": "tsc && node scripts/copy-html.js",
+    "start": "npm run build && electron .",
+    "dev": "electron .",
+    "dist": "npm run build && electron-builder --win --x64"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "electron": "^29.0.0",
+    "electron-builder": "^24.0.0",
+    "typescript": "^5.0.0"
+  },
+  "build": {
+    "appId": "com.vtuber.standing-picture-controller",
+    "productName": "Standing Picture Controller",
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.utilities",
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "口パク機能のためにマイクを使用します。"
+      }
+    },
+    "files": [
+      "dist/**/*",
+      "config.json"
+    ],
+    "extraResources": [
+      { "from": "assets", "to": "assets" },
+      { "from": "config.json", "to": "config.json" }
+    ],
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

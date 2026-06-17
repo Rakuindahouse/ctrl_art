@@ -1,0 +1,81 @@
+{
+  "window": {
+    "width": 1920,
+    "height": 1080,
+    "alwaysOnTop": true
+  },
+  "gamepad": {
+    "deadzone": 0.15,
+    "moveSpeed": 5.0,
+    "scaleSpeed": 0.01
+  },
+  "animation": {
+    "float": {
+      "enabled": true,
+      "vertical": { "amplitude": 8, "period": 3.0 },
+      "horizontal": { "amplitude": 4, "period": 4.5 }
+    }
+  },
+  "lipsync": {
+    "enabled": true,
+    "micDeviceId": "default",
+    "threshold": 0.05,
+    "closeDelay": 80
+  },
+  "autoExpression": {
+    "mode": "off",
+    "buttonIndex": 11,
+    "peakThreshold": 0.15,
+    "cooldownMs": 3000,
+    "candidates": [0, 1, 2, 3, 4]
+  },
+  "characters": [
+    {
+      "id": "popura",
+      "name": "星炉ぽぷら",
+      "defaultPosition": { "x": 960, "y": 540 },
+      "defaultScale": { "x": 0.25, "y": 0.25 },
+      "costumes": [
+        {
+          "id": "default",
+          "expressions": [
+            "assets/characters/popura/default/normal.png",
+            "assets/characters/popura/default/smile.png",
+            "assets/characters/popura/default/surprise.png",
+            "assets/characters/popura/default/hmm.png",
+            "assets/characters/popura/default/uneasy.png"
+          ]
+        },
+        {
+          "id": "china",
+          "expressions": [
+            "assets/characters/popura/china/normal.png",
+            "assets/characters/popura/china/smirk.png",
+            "assets/characters/popura/china/wink.png",
+            "assets/characters/popura/china/blush.png",
+            "assets/characters/popura/china/surprise.png"
+          ]
+        },
+        {
+          "id": "china_steamer",
+          "expressions": [
+            "assets/characters/popura/china_steamer/normal.png",
+            "assets/characters/popura/china_steamer/smirk.png",
+            "assets/characters/popura/china_steamer/wink.png",
+            "assets/characters/popura/china_steamer/blush.png",
+            "assets/characters/popura/china_steamer/surprise.png"
+          ]
+        },
+        {
+          "id": "lolita",
+          "expressions": [
+            "assets/characters/popura/lolita/normal.png",
+            "assets/characters/popura/lolita/smile.png",
+            "assets/characters/popura/lolita/teary.png",
+            "assets/characters/popura/lolita/pale.png"
+          ]
+        }
+      ]
+    }
+  ]
+}
