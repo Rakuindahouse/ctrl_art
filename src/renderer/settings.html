@@ -5,57 +5,59 @@
   <title>設定</title>
   <style>
     :root {
-      --bg: #1e1e2e;
-      --surface: #2a2a3e;
-      --border: #444466;
-      --accent: #7c5cfc;
-      --text: #cdd6f4;
-      --muted: #888aaa;
-      --green: #4ade80;
-      --red: #f87171;
+      --bg: #f0f5fc;
+      --surface: #ffffff;
+      --border: #c8d9ef;
+      --accent: #2563eb;
+      --text: #1e3354;
+      --muted: #6b82a0;
+      --green: #16a34a;
+      --red: #dc2626;
       --radius: 8px;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: var(--bg); color: var(--text); font-family: "Segoe UI", sans-serif; font-size: 14px; padding: 0 0 80px; }
-    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 20px; font-size: 18px; font-weight: 600; color: #fff; }
+    header { background: var(--accent); border-bottom: 1px solid #1d4ed8; padding: 16px 20px; font-size: 18px; font-weight: 600; color: #fff; }
     .sections { padding: 16px 20px; display: flex; flex-direction: column; gap: 16px; }
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: 0 1px 3px rgba(37,99,235,0.06); }
     .card h2 { font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: var(--accent); text-transform: uppercase; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
     .row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 12px; }
     .row:last-child { margin-bottom: 0; }
     label { flex: 0 0 auto; color: var(--muted); font-size: 13px; min-width: 140px; }
     input[type=range] { flex: 1; accent-color: var(--accent); height: 4px; cursor: pointer; }
-    .val { min-width: 48px; text-align: right; font-variant-numeric: tabular-nums; color: #fff; font-size: 13px; }
-    input[type=number], input[type=text] { background: #111122; border: 1px solid var(--border); border-radius: 4px; color: var(--text); padding: 4px 8px; font-size: 13px; width: 80px; text-align: right; }
+    .val { min-width: 48px; text-align: right; font-variant-numeric: tabular-nums; color: var(--text); font-size: 13px; font-weight: 600; }
+    input[type=number], input[type=text] { background: #eef3fb; border: 1px solid var(--border); border-radius: 4px; color: var(--text); padding: 4px 8px; font-size: 13px; width: 80px; text-align: right; }
+    input[type=number]:focus, input[type=text]:focus { outline: none; border-color: var(--accent); }
     input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
-    select { background: #111122; border: 1px solid var(--border); border-radius: 4px; color: var(--text); padding: 4px 8px; font-size: 13px; flex: 1; cursor: pointer; }
+    select { background: #eef3fb; border: 1px solid var(--border); border-radius: 4px; color: var(--text); padding: 4px 8px; font-size: 13px; flex: 1; cursor: pointer; }
+    select:focus { outline: none; border-color: var(--accent); }
     .hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
-    footer { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); padding: 12px 20px; display: flex; gap: 10px; justify-content: flex-end; }
+    footer { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); padding: 12px 20px; display: flex; gap: 10px; justify-content: flex-end; box-shadow: 0 -1px 6px rgba(37,99,235,0.08); }
     button { padding: 8px 20px; border-radius: 6px; border: none; font-size: 14px; cursor: pointer; font-family: inherit; }
     #saveBtn { background: var(--accent); color: #fff; font-weight: 600; }
-    #saveBtn:hover { background: #9475fd; }
+    #saveBtn:hover { background: #1d4ed8; }
     #saveBtn:disabled { opacity: 0.6; cursor: not-allowed; }
-    #closeBtn { background: var(--border); color: var(--text); }
-    #closeBtn:hover { background: #555577; }
+    #closeBtn { background: #dbeafe; color: var(--accent); }
+    #closeBtn:hover { background: #bfdbfe; }
     #resetStateBtn { background: transparent; color: var(--muted); border: 1px solid var(--border); margin-right: auto; }
-    #resetStateBtn:hover { color: var(--text); }
+    #resetStateBtn:hover { color: var(--text); border-color: var(--text); }
 
     /* Controller badge */
-    .gp-badge { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 8px; background: #1a0e0e; color: var(--red); font-size: 13px; font-weight: 500; }
+    .gp-badge { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 8px; background: #fef2f2; color: var(--red); font-size: 13px; font-weight: 500; }
     .gp-badge::before { content: ''; display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
-    .gp-badge.connected { background: #0e1a12; color: var(--green); }
+    .gp-badge.connected { background: #f0fdf4; color: var(--green); }
     .gp-badge.connected::before { background: var(--green); box-shadow: 0 0 6px var(--green); }
 
     /* Mic badge */
-    .mic-badge { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 6px; background: #111122; border: 1px solid var(--border); color: var(--muted); font-size: 12px; min-width: 120px; }
-    .mic-badge::before { content: ''; display: block; width: 8px; height: 8px; border-radius: 50%; background: #444; flex-shrink: 0; }
+    .mic-badge { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 6px; background: #eef3fb; border: 1px solid var(--border); color: var(--muted); font-size: 12px; min-width: 120px; }
+    .mic-badge::before { content: ''; display: block; width: 8px; height: 8px; border-radius: 50%; background: #bcd; flex-shrink: 0; }
     .mic-badge.active { color: var(--green); }
     .mic-badge.active::before { background: var(--green); box-shadow: 0 0 5px var(--green); }
 
     /* Tabs */
     .tab-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
-    .tab-btn { background: #111122; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; font-size: 12px; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 5px; }
-    .tab-btn:hover { color: var(--text); }
+    .tab-btn { background: #eef3fb; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; font-size: 12px; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 5px; }
+    .tab-btn:hover { color: var(--text); border-color: var(--accent); }
     .tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
     .tab-btn .tab-del { font-size: 10px; opacity: 0.7; line-height: 1; }
     .tab-btn .tab-del:hover { opacity: 1; color: var(--red); }
@@ -65,10 +67,10 @@
     /* Expression grid */
     .expr-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px; }
     .mouth-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
-    .expr-slot { background: #111122; border: 2px dashed var(--border); border-radius: 8px; padding: 8px 6px; display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; transition: border-color 0.15s; min-height: 100px; }
+    .expr-slot { background: #eef3fb; border: 2px dashed var(--border); border-radius: 8px; padding: 8px 6px; display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; transition: border-color 0.15s; min-height: 100px; }
     .expr-slot:hover { border-color: var(--accent); }
-    .expr-slot.drag-over { border-color: var(--green); background: #0a1d10; }
-    .expr-thumb { width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--muted); overflow: hidden; border-radius: 4px; background: #0a0a1a; flex-shrink: 0; }
+    .expr-slot.drag-over { border-color: var(--green); background: #dcfce7; }
+    .expr-thumb { width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--muted); overflow: hidden; border-radius: 4px; background: #dce8f7; flex-shrink: 0; }
     .expr-thumb img { width: 100%; height: 100%; object-fit: contain; }
     .expr-label { font-size: 9px; font-weight: 500; color: var(--muted); text-align: center; word-break: break-all; max-width: 100%; line-height: 1.3; }
 
@@ -77,7 +79,7 @@
     .btn-map-table td { padding: 5px 4px; vertical-align: middle; }
     .btn-map-table td:first-child { color: var(--muted); width: 140px; }
     .assign-cell { display: flex; align-items: center; gap: 4px; }
-    .btn-assign { min-width: 50px; padding: 4px 10px; background: #111122; border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 12px; cursor: pointer; font-family: inherit; text-align: center; }
+    .btn-assign { min-width: 50px; padding: 4px 10px; background: #eef3fb; border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 12px; cursor: pointer; font-family: inherit; text-align: center; }
     .btn-assign:hover { border-color: var(--accent); }
     @keyframes pulse { from { opacity: 1; } to { opacity: 0.4; } }
     .btn-assign.listening { border-color: var(--green); color: var(--green); animation: pulse 0.5s infinite alternate; }
@@ -104,7 +106,7 @@
       <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
         <div id="gpStatus" class="gp-badge">確認中...</div>
         <select id="gamepadSelect" style="flex:1; min-width:160px;"></select>
-        <button id="refreshGamepads" style="padding:5px 12px; background:var(--border); color:var(--text); border:none; border-radius:4px; cursor:pointer; font-family:inherit; font-size:12px;">更新</button>
+        <button id="refreshGamepads" style="padding:5px 12px; background:#dbeafe; color:var(--accent); border:none; border-radius:4px; cursor:pointer; font-family:inherit; font-size:12px;">更新</button>
       </div>
     </div>
 
@@ -141,7 +143,7 @@
       <p class="hint" style="margin-bottom:10px;">クリック → キーボードのキーを押して上書き</p>
       <table class="btn-map-table" id="kbMapTable"></table>
       <div style="margin-top:12px;">
-        <button id="openMonitorBtn" style="padding:6px 14px; background:var(--border); color:var(--text); border:none; border-radius:4px; cursor:pointer; font-family:inherit; font-size:12px;">入力モニターを開く</button>
+        <button id="openMonitorBtn" style="padding:6px 14px; background:#dbeafe; color:var(--accent); border:none; border-radius:4px; cursor:pointer; font-family:inherit; font-size:12px;">入力モニターを開く</button>
       </div>
     </div>
 
