@@ -347,11 +347,23 @@ function buildButtonMapTable(): void {
     const tdLabel = document.createElement('td');
     tdLabel.textContent = label;
     const tdBtn = document.createElement('td');
+    tdBtn.className = 'assign-cell';
     const btn = document.createElement('button');
     btn.className = 'btn-assign';
     btn.textContent = xboxBtnLabel(localButtonMap[key]);
     btn.onclick = () => startCapture(key, btn);
+    const clrBtn = document.createElement('button');
+    clrBtn.className = 'btn-clear';
+    clrBtn.textContent = '×';
+    clrBtn.title = '未設定にする';
+    clrBtn.onclick = () => {
+      cancelCapture();
+      localButtonMap[key] = -1;
+      ipcRenderer.invoke('update-button-map', { ...localButtonMap });
+      buildButtonMapTable();
+    };
     tdBtn.appendChild(btn);
+    tdBtn.appendChild(clrBtn);
     tr.appendChild(tdLabel);
     tr.appendChild(tdBtn);
     table.appendChild(tr);
@@ -401,7 +413,7 @@ function startKbCapture(key: keyof KeyboardMap, btn: HTMLButtonElement): void {
   cancelKbCapture();
   kbCaptureKey = key;
   kbCaptureBtn = btn;
-  btn.textContent = '押して...';
+  btn.textContent = '押して... (Escで未設定)';
   btn.classList.add('listening');
 
   const MODIFIER_CODES = new Set([
@@ -415,16 +427,21 @@ function startKbCapture(key: keyof KeyboardMap, btn: HTMLButtonElement): void {
     if (!kbCaptureKey) return;
     const targetKey = kbCaptureKey;
     const code = e.code;
-    // 重複している既存の割り当てを解除
-    (Object.keys(localKeyboardMap) as (keyof KeyboardMap)[]).forEach(k => {
-      if (k !== targetKey && localKeyboardMap[k] === code) localKeyboardMap[k] = '';
-    });
-    localKeyboardMap[targetKey] = code;
     kbCaptureKey = null;
     kbCaptureBtn = null;
     if (kbCaptureTimeoutId !== null) clearTimeout(kbCaptureTimeoutId);
     kbCaptureTimeoutId = null;
     window.removeEventListener('keydown', onKeyDown, true);
+    if (code === 'Escape') {
+      // Escで未設定クリア
+      localKeyboardMap[targetKey] = '';
+    } else {
+      // 重複している既存の割り当てを解除
+      (Object.keys(localKeyboardMap) as (keyof KeyboardMap)[]).forEach(k => {
+        if (k !== targetKey && localKeyboardMap[k] === code) localKeyboardMap[k] = '';
+      });
+      localKeyboardMap[targetKey] = code;
+    }
     buildKeyboardMapTable();
   };
 
@@ -446,11 +463,22 @@ function buildKeyboardMapTable(): void {
     const tdLabel = document.createElement('td');
     tdLabel.textContent = label;
     const tdBtn = document.createElement('td');
+    tdBtn.className = 'assign-cell';
     const btn = document.createElement('button');
     btn.className = 'btn-assign';
     btn.textContent = keyLabel(localKeyboardMap[key]);
     btn.onclick = () => startKbCapture(key, btn);
+    const clrBtn = document.createElement('button');
+    clrBtn.className = 'btn-clear';
+    clrBtn.textContent = '×';
+    clrBtn.title = '未設定にする';
+    clrBtn.onclick = () => {
+      cancelKbCapture();
+      localKeyboardMap[key] = '';
+      buildKeyboardMapTable();
+    };
     tdBtn.appendChild(btn);
+    tdBtn.appendChild(clrBtn);
     tr.appendChild(tdLabel);
     tr.appendChild(tdBtn);
     table.appendChild(tr);

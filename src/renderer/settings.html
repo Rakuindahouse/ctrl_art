@@ -76,10 +76,13 @@
     .btn-map-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     .btn-map-table td { padding: 5px 4px; vertical-align: middle; }
     .btn-map-table td:first-child { color: var(--muted); width: 140px; }
+    .assign-cell { display: flex; align-items: center; gap: 4px; }
     .btn-assign { min-width: 50px; padding: 4px 10px; background: #111122; border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 12px; cursor: pointer; font-family: inherit; text-align: center; }
     .btn-assign:hover { border-color: var(--accent); }
     @keyframes pulse { from { opacity: 1; } to { opacity: 0.4; } }
     .btn-assign.listening { border-color: var(--green); color: var(--green); animation: pulse 0.5s infinite alternate; }
+    .btn-clear { padding: 2px 6px; background: transparent; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); font-size: 11px; cursor: pointer; font-family: inherit; line-height: 1.4; }
+    .btn-clear:hover { border-color: #e05; color: #e05; }
 
     /* Char basic */
     .char-basic { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; font-size: 13px; color: var(--muted); }
