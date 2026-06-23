@@ -61,6 +61,7 @@ export interface ButtonMap {
   nextCostume: number;
   prevCharacter: number;
   nextCharacter: number;
+  resetExpression: number;
 }
 
 export interface KeyboardMap {
@@ -81,6 +82,9 @@ export interface KeyboardMap {
   nextCostume: string;
   prevCharacter: string;
   nextCharacter: string;
+  resetExpression: string;
+  scaleUp: string;
+  scaleDown: string;
 }
 
 export interface CharacterConfig {

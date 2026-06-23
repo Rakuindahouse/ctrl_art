@@ -34,6 +34,9 @@ let scale = { x: 1.0, y: 1.0 };
 // Lip-sync overlay toggle
 let lipSyncActive = true;
 
+// 表情ロック（trueのとき表情画像を表示、falseのとき口パクモード）
+let expressionLocked = false;
+
 // Reset hold tracking
 let resetHolding = false;
 let resetTimer: ReturnType<typeof setTimeout> | null = null;
@@ -103,6 +106,10 @@ async function init(): Promise<void> {
     gamepadMgr.updateButtonMap(bm);
   });
 
+  ipcRenderer.on('click-through-changed', (_e, enabled: boolean) => {
+    showStatus(enabled ? 'クリックスルー ON（⌘⇧T で解除）' : 'クリックスルー OFF');
+  });
+
   ipcRenderer.on('config-updated', (_e, newCfg: AppConfig) => {
     config = newCfg;
     charMgr.updateConfig(newCfg);
@@ -135,27 +142,16 @@ function reportAction(label: string, category: 'expr' | 'system'): void {
   ipcRenderer.send('input-action', label, category);
 }
 
-function mergeActions(gp: GamepadActions, kb: GamepadActions): GamepadActions {
-  return {
-    moveX: gp.moveX || kb.moveX,
-    moveY: gp.moveY || kb.moveY,
-    scaleX: gp.scaleX || kb.scaleX,
-    scaleY: gp.scaleY || kb.scaleY,
-    expression: gp.expression ?? kb.expression,
-    toggleFloat: gp.toggleFloat || kb.toggleFloat,
-    toggleLipSync: gp.toggleLipSync || kb.toggleLipSync,
-    resetHeld: gp.resetHeld || kb.resetHeld,
-    openSettings: gp.openSettings || kb.openSettings,
-    prevCostume: gp.prevCostume || kb.prevCostume,
-    nextCostume: gp.nextCostume || kb.nextCostume,
-    prevCharacter: gp.prevCharacter || kb.prevCharacter,
-    nextCharacter: gp.nextCharacter || kb.nextCharacter,
-  };
+function getActions(): GamepadActions {
+  const gpActions = gamepadMgr.poll();
+  const kbActions = keyboardMgr.poll();
+  // ゲームパッド接続中はゲームパッド優先、未接続時はキーボード
+  return gamepadMgr.getActiveGamepad() ? gpActions : kbActions;
 }
 
 // ---- Main loop ----
 function loop(ts: number): void {
-  const actions = mergeActions(gamepadMgr.poll(), keyboardMgr.poll());
+  const actions = getActions();
 
   // Movement (left stick)
   pos.x += actions.moveX * config.gamepad.moveSpeed;
@@ -167,13 +163,14 @@ function loop(ts: number): void {
   scale.y = newScale;
 
   // Costume switch (D-Pad left/right)
-  if (actions.prevCostume) { charMgr.prevCostume(); const lbl = `衣装← ${charMgr.getCostume()?.id}`; showStatus(lbl); reportAction(lbl, 'system'); }
-  if (actions.nextCostume) { charMgr.nextCostume(); const lbl = `衣装→ ${charMgr.getCostume()?.id}`; showStatus(lbl); reportAction(lbl, 'system'); }
+  if (actions.prevCostume) { charMgr.prevCostume(); expressionLocked = false; const lbl = `衣装← ${charMgr.getCostume()?.id}`; showStatus(lbl); reportAction(lbl, 'system'); }
+  if (actions.nextCostume) { charMgr.nextCostume(); expressionLocked = false; const lbl = `衣装→ ${charMgr.getCostume()?.id}`; showStatus(lbl); reportAction(lbl, 'system'); }
 
   // Character switch (D-Pad up/down)
   if (actions.prevCharacter || actions.nextCharacter) {
     if (actions.prevCharacter) charMgr.prevCharacter();
     else charMgr.nextCharacter();
+    expressionLocked = false;
     const ch = charMgr.getCharacter();
     if (ch) { pos = { ...ch.defaultPosition }; scale = { ...(ch.defaultScale ?? { x: 1, y: 1 }) }; }
     const lbl = `キャラ: ${ch?.name ?? '?'}`;
@@ -181,12 +178,20 @@ function loop(ts: number): void {
     reportAction(lbl, 'system');
   }
 
-  // Expression buttons — set base expression directly, overlays are drawn on top
+  // 表情キー → 表情ロックモードへ
   if (actions.expression !== null) {
     charMgr.setExpression(actions.expression);
+    expressionLocked = true;
     const lbl = `表情 ${actions.expression + 1}`;
     showStatus(lbl);
     reportAction(lbl, 'expr');
+  }
+
+  // 口パクモードに戻る
+  if (actions.resetExpression) {
+    expressionLocked = false;
+    showStatus('口パクモード');
+    reportAction('口パクリセット', 'system');
   }
 
   // Float toggle (R1/RB)
@@ -273,7 +278,22 @@ function loop(ts: number): void {
 function render(offset: { x: number; y: number }): void {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  const img = charMgr.getCurrentImage();
+  let img: HTMLImageElement | null;
+
+  if (expressionLocked) {
+    // 表情ロックモード：選択した表情画像をそのまま表示
+    img = charMgr.getCurrentImage();
+  } else {
+    // 口パクモード：マイク入力で口開け/口閉じ画像を切り替え
+    const mouthOpen = charMgr.getMouthOpenImage();
+    const mouthClosed = charMgr.getMouthClosedImage();
+    if (lipSyncActive && lipSync.isMouthOpen()) {
+      img = mouthOpen ?? mouthClosed ?? charMgr.getCurrentImage();
+    } else {
+      img = mouthClosed ?? mouthOpen ?? charMgr.getCurrentImage();
+    }
+  }
+
   if (!img) {
     drawPlaceholder();
     return;
@@ -286,21 +306,7 @@ function render(offset: { x: number; y: number }): void {
 
   ctx.save();
   ctx.translate(dx, dy);
-
-  // 表情画像を描画（ボタンで切替）
   ctx.drawImage(img, -w / 2, -h / 2, w, h);
-
-  // 口パクオーバーレイ（lipSyncActiveのときのみ）
-  if (lipSyncActive) {
-    if (lipSync.isMouthOpen()) {
-      const mouthOpenImg = charMgr.getMouthOpenImage();
-      if (mouthOpenImg) ctx.drawImage(mouthOpenImg, -w / 2, -h / 2, w, h);
-    } else if (config.lipsync.useMouthClosed) {
-      const mouthClosedImg = charMgr.getMouthClosedImage();
-      if (mouthClosedImg) ctx.drawImage(mouthClosedImg, -w / 2, -h / 2, w, h);
-    }
-  }
-
   ctx.restore();
 }
 

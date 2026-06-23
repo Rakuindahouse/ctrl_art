@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, dialog, globalShortcut } from 'electron';
 import * as path from 'path';
 import { ConfigManager } from './configManager';
 import { AppConfig } from '../types';
@@ -7,6 +7,17 @@ const configManager = new ConfigManager();
 let mainWindow: BrowserWindow | null = null;
 let settingsWindow: BrowserWindow | null = null;
 let monitorWindow: BrowserWindow | null = null;
+let clickThrough = false;
+
+function setClickThrough(enabled: boolean): void {
+  clickThrough = enabled;
+  mainWindow?.setIgnoreMouseEvents(enabled, { forward: true });
+  broadcast('click-through-changed', enabled);
+}
+
+function toggleClickThrough(): void {
+  setClickThrough(!clickThrough);
+}
 
 function createMainWindow(): void {
   const cfg = configManager.getConfig();
@@ -37,6 +48,8 @@ function createMainWindow(): void {
       { label: '設定を開く', click: () => createSettingsWindow() },
       { label: '入力モニター', click: () => createMonitorWindow() },
       { label: 'デバッグツール', click: () => mainWindow?.webContents.openDevTools({ mode: 'detach' }) },
+      { type: 'separator' },
+      { label: `クリックスルー: ${clickThrough ? 'ON' : 'OFF'}  (⌘⇧T)`, click: () => toggleClickThrough() },
       { type: 'separator' },
       { label: '終了', click: () => app.quit() },
     ]);
@@ -139,10 +152,16 @@ ipcMain.handle('update-button-map', (_event, bm) => {
 });
 
 ipcMain.handle('open-file-dialog', async () => {
-  const result = await dialog.showOpenDialog({
+  mainWindow?.setAlwaysOnTop(false);
+  settingsWindow?.setAlwaysOnTop(false);
+  const parent = settingsWindow ?? mainWindow ?? undefined;
+  const result = await dialog.showOpenDialog(parent!, {
     filters: [{ name: '画像ファイル', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif'] }],
     properties: ['openFile'],
   });
+  const cfg = configManager.getConfig();
+  if (mainWindow) mainWindow.setAlwaysOnTop(cfg.window.alwaysOnTop);
+  if (settingsWindow) settingsWindow.setAlwaysOnTop(true);
   return result.canceled ? null : (result.filePaths[0] ?? null);
 });
 
@@ -164,9 +183,14 @@ ipcMain.handle('close-settings', () => {
 
 app.whenReady().then(() => {
   createMainWindow();
+  globalShortcut.register('CommandOrControl+Shift+T', toggleClickThrough);
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
   });
+});
+
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll();
 });
 
 app.on('window-all-closed', () => {

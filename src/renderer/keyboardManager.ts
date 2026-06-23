@@ -15,6 +15,10 @@ export class KeyboardManager {
     window.addEventListener('keyup', (e) => {
       this.held.delete(e.code);
     });
+    window.addEventListener('blur', () => {
+      this.held.clear();
+      this.fired.clear();
+    });
   }
 
   updateKeyboardMap(km: KeyboardMap): void {
@@ -29,13 +33,15 @@ export class KeyboardManager {
       nextCharacter: false, prevCharacter: false,
       expression: null,
       toggleFloat: false, toggleLipSync: false,
-      resetHeld: false, openSettings: false,
+      resetHeld: false, openSettings: false, resetExpression: false,
     };
 
     if (this.held.has(km.moveLeft))  actions.moveX = -1;
     if (this.held.has(km.moveRight)) actions.moveX = 1;
     if (this.held.has(km.moveUp))    actions.moveY = -1;
     if (this.held.has(km.moveDown))  actions.moveY = 1;
+    if (this.held.has(km.scaleUp))   actions.scaleY = -0.3;
+    if (this.held.has(km.scaleDown)) actions.scaleY = 0.3;
     actions.resetHeld = this.held.has(km.resetHold);
 
     const exprKeys = [km.expr1, km.expr2, km.expr3, km.expr4, km.expr5];
@@ -46,9 +52,10 @@ export class KeyboardManager {
     if (this.fired.has(km.toggleLipSync)) actions.toggleLipSync = true;
     if (this.fired.has(km.prevCostume))   actions.prevCostume = true;
     if (this.fired.has(km.nextCostume))   actions.nextCostume = true;
-    if (this.fired.has(km.prevCharacter)) actions.prevCharacter = true;
-    if (this.fired.has(km.nextCharacter)) actions.nextCharacter = true;
-    if (this.fired.has(km.openSettings))  actions.openSettings = true;
+    if (this.fired.has(km.prevCharacter))   actions.prevCharacter = true;
+    if (this.fired.has(km.nextCharacter))   actions.nextCharacter = true;
+    if (this.fired.has(km.openSettings))    actions.openSettings = true;
+    if (this.fired.has(km.resetExpression)) actions.resetExpression = true;
 
     this.fired.clear();
     return actions;

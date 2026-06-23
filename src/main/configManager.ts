@@ -11,6 +11,7 @@ const DEFAULT_BUTTON_MAP: ButtonMap = {
   openSettings: 9,
   prevCharacter: 12, nextCharacter: 13,
   prevCostume: 14, nextCostume: 15,
+  resetExpression: 7,
 };
 
 const DEFAULT_KEYBOARD_MAP: KeyboardMap = {
@@ -21,6 +22,9 @@ const DEFAULT_KEYBOARD_MAP: KeyboardMap = {
   resetHold: 'KeyR', openSettings: 'KeyF',
   prevCostume: 'BracketLeft', nextCostume: 'BracketRight',
   prevCharacter: 'Comma', nextCharacter: 'Period',
+  resetExpression: 'Backquote',
+  scaleUp: 'Equal',
+  scaleDown: 'Minus',
 };
 
 const DEFAULT_CONFIG: AppConfig = {

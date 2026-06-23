@@ -8,6 +8,7 @@ const DEFAULT_BUTTON_MAP: ButtonMap = {
   openSettings: 9,
   prevCharacter: 12, nextCharacter: 13,
   prevCostume: 14, nextCostume: 15,
+  resetExpression: 7,
 };
 
 export interface GamepadActions {
@@ -24,6 +25,7 @@ export interface GamepadActions {
   toggleLipSync: boolean;
   resetHeld: boolean;
   openSettings: boolean;
+  resetExpression: boolean;
 }
 
 export class GamepadManager {
@@ -68,7 +70,7 @@ export class GamepadManager {
       nextCostume: false, prevCostume: false,
       nextCharacter: false, prevCharacter: false,
       expression: null, toggleFloat: false, toggleLipSync: false,
-      resetHeld: false, openSettings: false,
+      resetHeld: false, openSettings: false, resetExpression: false,
     };
 
     if (!gp) {
@@ -98,6 +100,7 @@ export class GamepadManager {
     if (this.justPressed(buttons, bm.nextCostume)) actions.nextCostume = true;
     if (this.justPressed(buttons, bm.prevCharacter)) actions.prevCharacter = true;
     if (this.justPressed(buttons, bm.nextCharacter)) actions.nextCharacter = true;
+    if (this.justPressed(buttons, bm.resetExpression)) actions.resetExpression = true;
 
     this.prevButtons = Array.from({ length: buttons.length }, (_, i) => buttons[i]?.pressed ?? false);
     return actions;

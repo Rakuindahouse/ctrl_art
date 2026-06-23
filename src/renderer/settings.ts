@@ -253,6 +253,7 @@ const KEY_CODE_LABELS: Record<string, string> = {
 };
 
 function keyLabel(code: string): string {
+  if (!code) return '未設定';
   return KEY_CODE_LABELS[code] ?? code;
 }
 
@@ -265,23 +266,25 @@ const XBOX_BUTTON_NAMES: Record<number, string> = {
 };
 
 function xboxBtnLabel(idx: number): string {
+  if (idx < 0) return '未設定';
   return XBOX_BUTTON_NAMES[idx] ?? `#${idx}`;
 }
 
 const BTN_MAP_LABELS: { key: keyof ButtonMap; label: string }[] = [
-  { key: 'expr1',         label: '表情1' },
-  { key: 'expr2',         label: '表情2' },
-  { key: 'expr3',         label: '表情3' },
-  { key: 'expr4',         label: '表情4' },
-  { key: 'expr5',         label: '表情5' },
-  { key: 'toggleFloat',   label: 'フワフワ ON/OFF' },
-  { key: 'toggleLipSync', label: '口パク ON/OFF' },
-  { key: 'resetHold',     label: 'リセット長押し' },
-  { key: 'openSettings',  label: '設定を開く' },
-  { key: 'prevCostume',   label: '衣装←' },
-  { key: 'nextCostume',   label: '衣装→' },
-  { key: 'prevCharacter', label: 'キャラ↑' },
-  { key: 'nextCharacter', label: 'キャラ↓' },
+  { key: 'expr1',           label: '表情1' },
+  { key: 'expr2',           label: '表情2' },
+  { key: 'expr3',           label: '表情3' },
+  { key: 'expr4',           label: '表情4' },
+  { key: 'expr5',           label: '表情5' },
+  { key: 'resetExpression', label: '口パクモードに戻る' },
+  { key: 'toggleFloat',     label: 'フワフワ ON/OFF' },
+  { key: 'toggleLipSync',   label: '口パク ON/OFF' },
+  { key: 'resetHold',       label: 'リセット長押し' },
+  { key: 'openSettings',    label: '設定を開く' },
+  { key: 'prevCostume',     label: '衣装←' },
+  { key: 'nextCostume',     label: '衣装→' },
+  { key: 'prevCharacter',   label: 'キャラ↑' },
+  { key: 'nextCharacter',   label: 'キャラ↓' },
 ];
 
 let captureKey: keyof ButtonMap | null = null;
@@ -315,14 +318,18 @@ function startCapture(key: keyof ButtonMap, btn: HTMLButtonElement): void {
       if (!gp) continue;
       for (let i = 0; i < gp.buttons.length; i++) {
         if (gp.buttons[i]?.pressed && captureKey) {
-          localButtonMap[captureKey] = i;
-          btn.textContent = xboxBtnLabel(i);
-          btn.classList.remove('listening');
+          const targetKey = captureKey;
+          // 重複している既存の割り当てを解除
+          (Object.keys(localButtonMap) as (keyof ButtonMap)[]).forEach(k => {
+            if (k !== targetKey && localButtonMap[k] === i) localButtonMap[k] = -1;
+          });
+          localButtonMap[targetKey] = i;
           captureKey = null;
           captureBtn = null;
           if (capturePollId !== null) clearInterval(capturePollId);
           if (captureTimeoutId !== null) clearTimeout(captureTimeoutId);
           ipcRenderer.invoke('update-button-map', { ...localButtonMap });
+          buildButtonMapTable();
           return;
         }
       }
@@ -353,23 +360,26 @@ function buildButtonMapTable(): void {
 
 // ---- Keyboard mapping ----
 const KB_MAP_LABELS: { key: keyof KeyboardMap; label: string }[] = [
-  { key: 'moveLeft',      label: '移動 ←' },
-  { key: 'moveRight',     label: '移動 →' },
-  { key: 'moveUp',        label: '移動 ↑' },
-  { key: 'moveDown',      label: '移動 ↓' },
-  { key: 'expr1',         label: '表情1' },
-  { key: 'expr2',         label: '表情2' },
-  { key: 'expr3',         label: '表情3' },
-  { key: 'expr4',         label: '表情4' },
-  { key: 'expr5',         label: '表情5' },
-  { key: 'toggleFloat',   label: 'フワフワ ON/OFF' },
-  { key: 'toggleLipSync', label: '口パク ON/OFF' },
-  { key: 'resetHold',     label: 'リセット長押し' },
-  { key: 'openSettings',  label: '設定を開く' },
-  { key: 'prevCostume',   label: '衣装←' },
-  { key: 'nextCostume',   label: '衣装→' },
-  { key: 'prevCharacter', label: 'キャラ↑' },
-  { key: 'nextCharacter', label: 'キャラ↓' },
+  { key: 'moveLeft',        label: '移動 ←' },
+  { key: 'moveRight',       label: '移動 →' },
+  { key: 'moveUp',          label: '移動 ↑' },
+  { key: 'moveDown',        label: '移動 ↓' },
+  { key: 'scaleUp',         label: 'スケール拡大' },
+  { key: 'scaleDown',       label: 'スケール縮小' },
+  { key: 'expr1',           label: '表情1' },
+  { key: 'expr2',           label: '表情2' },
+  { key: 'expr3',           label: '表情3' },
+  { key: 'expr4',           label: '表情4' },
+  { key: 'expr5',           label: '表情5' },
+  { key: 'resetExpression', label: '口パクモードに戻る' },
+  { key: 'toggleFloat',     label: 'フワフワ ON/OFF' },
+  { key: 'toggleLipSync',   label: '口パク ON/OFF' },
+  { key: 'resetHold',       label: 'リセット長押し' },
+  { key: 'openSettings',    label: '設定を開く' },
+  { key: 'prevCostume',     label: '衣装←' },
+  { key: 'nextCostume',     label: '衣装→' },
+  { key: 'prevCharacter',   label: 'キャラ↑' },
+  { key: 'nextCharacter',   label: 'キャラ↓' },
 ];
 
 let kbCaptureKey: keyof KeyboardMap | null = null;
@@ -394,23 +404,38 @@ function startKbCapture(key: keyof KeyboardMap, btn: HTMLButtonElement): void {
   btn.textContent = '押して...';
   btn.classList.add('listening');
 
+  const MODIFIER_CODES = new Set([
+    'ShiftLeft', 'ShiftRight', 'ControlLeft', 'ControlRight',
+    'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight',
+  ]);
+
   const onKeyDown = (e: KeyboardEvent): void => {
+    if (MODIFIER_CODES.has(e.code)) return;
     e.preventDefault();
     if (!kbCaptureKey) return;
-    localKeyboardMap[kbCaptureKey] = e.code;
-    btn.textContent = keyLabel(e.code);
-    btn.classList.remove('listening');
+    const targetKey = kbCaptureKey;
+    const code = e.code;
+    // 重複している既存の割り当てを解除
+    (Object.keys(localKeyboardMap) as (keyof KeyboardMap)[]).forEach(k => {
+      if (k !== targetKey && localKeyboardMap[k] === code) localKeyboardMap[k] = '';
+    });
+    localKeyboardMap[targetKey] = code;
     kbCaptureKey = null;
     kbCaptureBtn = null;
     if (kbCaptureTimeoutId !== null) clearTimeout(kbCaptureTimeoutId);
+    kbCaptureTimeoutId = null;
     window.removeEventListener('keydown', onKeyDown, true);
+    buildKeyboardMapTable();
   };
 
-  window.addEventListener('keydown', onKeyDown, true);
-  kbCaptureTimeoutId = window.setTimeout(() => {
-    window.removeEventListener('keydown', onKeyDown, true);
-    cancelKbCapture();
-  }, 5000);
+  // ボタンクリック時の Enter/Space を拾わないよう少し遅らせる
+  setTimeout(() => {
+    window.addEventListener('keydown', onKeyDown, true);
+    kbCaptureTimeoutId = window.setTimeout(() => {
+      window.removeEventListener('keydown', onKeyDown, true);
+      cancelKbCapture();
+    }, 5000);
+  }, 150);
 }
 
 function buildKeyboardMapTable(): void {
