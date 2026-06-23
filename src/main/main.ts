@@ -49,7 +49,7 @@ function createMainWindow(): void {
       { label: '入力モニター', click: () => createMonitorWindow() },
       { label: 'デバッグツール', click: () => mainWindow?.webContents.openDevTools({ mode: 'detach' }) },
       { type: 'separator' },
-      { label: `クリックスルー: ${clickThrough ? 'ON' : 'OFF'}  (⌘⇧T)`, click: () => toggleClickThrough() },
+      { label: `クリックスルー: ${clickThrough ? 'ON' : 'OFF'}  (${process.platform === 'darwin' ? '⌘⇧T' : 'Ctrl+Shift+T'})`, click: () => toggleClickThrough() },
       { type: 'separator' },
       { label: '終了', click: () => app.quit() },
     ]);

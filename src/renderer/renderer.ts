@@ -107,7 +107,8 @@ async function init(): Promise<void> {
   });
 
   ipcRenderer.on('click-through-changed', (_e, enabled: boolean) => {
-    showStatus(enabled ? 'クリックスルー ON（⌘⇧T で解除）' : 'クリックスルー OFF');
+    const shortcut = process.platform === 'darwin' ? '⌘⇧T' : 'Ctrl+Shift+T';
+    showStatus(enabled ? `クリックスルー ON（${shortcut} で解除）` : 'クリックスルー OFF');
   });
 
   ipcRenderer.on('config-updated', (_e, newCfg: AppConfig) => {
