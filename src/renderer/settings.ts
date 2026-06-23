@@ -223,6 +223,17 @@ function startGpPolling(): void {
 }
 
 // ---- Button mapping ----
+const XBOX_BUTTON_NAMES: Record<number, string> = {
+  0: 'A', 1: 'B', 2: 'X', 3: 'Y',
+  4: 'LB', 5: 'RB', 6: 'LT', 7: 'RT',
+  8: 'View', 9: 'Menu', 10: 'LS', 11: 'RS',
+  12: '↑', 13: '↓', 14: '←', 15: '→', 16: 'Xbox',
+};
+
+function xboxBtnLabel(idx: number): string {
+  return XBOX_BUTTON_NAMES[idx] ?? `#${idx}`;
+}
+
 const BTN_MAP_LABELS: { key: keyof ButtonMap; label: string }[] = [
   { key: 'expr1',         label: '表情1' },
   { key: 'expr2',         label: '表情2' },
@@ -249,7 +260,7 @@ function cancelCapture(): void {
   if (captureTimeoutId !== null) clearTimeout(captureTimeoutId);
   if (captureBtn) {
     captureBtn.classList.remove('listening');
-    if (captureKey !== null) captureBtn.textContent = String(localButtonMap[captureKey]);
+    if (captureKey !== null) captureBtn.textContent = xboxBtnLabel(localButtonMap[captureKey]);
   }
   captureKey = null;
   captureBtn = null;
@@ -271,7 +282,7 @@ function startCapture(key: keyof ButtonMap, btn: HTMLButtonElement): void {
       for (let i = 0; i < gp.buttons.length; i++) {
         if (gp.buttons[i]?.pressed && captureKey) {
           localButtonMap[captureKey] = i;
-          btn.textContent = String(i);
+          btn.textContent = xboxBtnLabel(i);
           btn.classList.remove('listening');
           captureKey = null;
           captureBtn = null;
@@ -297,7 +308,7 @@ function buildButtonMapTable(): void {
     const tdBtn = document.createElement('td');
     const btn = document.createElement('button');
     btn.className = 'btn-assign';
-    btn.textContent = String(localButtonMap[key]);
+    btn.textContent = xboxBtnLabel(localButtonMap[key]);
     btn.onclick = () => startCapture(key, btn);
     tdBtn.appendChild(btn);
     tr.appendChild(tdLabel);
