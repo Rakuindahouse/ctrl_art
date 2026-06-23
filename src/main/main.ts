@@ -6,6 +6,7 @@ import { AppConfig } from '../types';
 const configManager = new ConfigManager();
 let mainWindow: BrowserWindow | null = null;
 let settingsWindow: BrowserWindow | null = null;
+let monitorWindow: BrowserWindow | null = null;
 
 function createMainWindow(): void {
   const cfg = configManager.getConfig();
@@ -34,6 +35,7 @@ function createMainWindow(): void {
   mainWindow.webContents.on('context-menu', () => {
     const menu = Menu.buildFromTemplate([
       { label: '設定を開く', click: () => createSettingsWindow() },
+      { label: '入力モニター', click: () => createMonitorWindow() },
       { label: 'デバッグツール', click: () => mainWindow?.webContents.openDevTools({ mode: 'detach' }) },
       { type: 'separator' },
       { label: '終了', click: () => app.quit() },
@@ -81,6 +83,25 @@ function createSettingsWindow(): void {
   });
 }
 
+function createMonitorWindow(): void {
+  if (monitorWindow) { monitorWindow.focus(); return; }
+  monitorWindow = new BrowserWindow({
+    width: 240,
+    height: 380,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    resizable: true,
+    title: '入力モニター',
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+    },
+  });
+  monitorWindow.loadFile(path.join(__dirname, '../renderer/input-monitor.html'));
+  monitorWindow.on('closed', () => { monitorWindow = null; });
+}
+
 function broadcast(channel: string, ...args: unknown[]): void {
   for (const win of BrowserWindow.getAllWindows()) {
     win.webContents.send(channel, ...args);
@@ -126,6 +147,12 @@ ipcMain.handle('open-file-dialog', async () => {
 });
 
 ipcMain.handle('get-app-root', () => configManager.getAppRoot());
+
+ipcMain.on('input-action', (_e, label: string, category: string) => {
+  monitorWindow?.webContents.send('input-action', label, category);
+});
+
+ipcMain.handle('open-monitor', () => createMonitorWindow());
 
 ipcMain.handle('open-settings', () => createSettingsWindow());
 

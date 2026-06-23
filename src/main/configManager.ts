@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { app } from 'electron';
-import { AppConfig, ButtonMap } from '../types';
+import { AppConfig, ButtonMap, KeyboardMap } from '../types';
 
 const DEFAULT_BUTTON_MAP: ButtonMap = {
   expr1: 0, expr2: 1, expr3: 2, expr4: 3, expr5: 4,
@@ -11,6 +11,16 @@ const DEFAULT_BUTTON_MAP: ButtonMap = {
   openSettings: 9,
   prevCharacter: 12, nextCharacter: 13,
   prevCostume: 14, nextCostume: 15,
+};
+
+const DEFAULT_KEYBOARD_MAP: KeyboardMap = {
+  moveLeft: 'ArrowLeft', moveRight: 'ArrowRight',
+  moveUp: 'ArrowUp', moveDown: 'ArrowDown',
+  expr1: 'Digit1', expr2: 'Digit2', expr3: 'Digit3', expr4: 'Digit4', expr5: 'Digit5',
+  toggleFloat: 'KeyQ', toggleLipSync: 'KeyE',
+  resetHold: 'KeyR', openSettings: 'KeyF',
+  prevCostume: 'BracketLeft', nextCostume: 'BracketRight',
+  prevCharacter: 'Comma', nextCharacter: 'Period',
 };
 
 const DEFAULT_CONFIG: AppConfig = {
@@ -25,6 +35,7 @@ const DEFAULT_CONFIG: AppConfig = {
   },
   lipsync: { enabled: true, micDeviceId: 'default', threshold: 0.05, closeDelay: 80, useMouthClosed: false },
   buttonMap: { ...DEFAULT_BUTTON_MAP },
+  keyboardMap: { ...DEFAULT_KEYBOARD_MAP },
   characters: [],
 };
 
@@ -50,6 +61,7 @@ function deepMerge(base: AppConfig, override: Partial<AppConfig>): AppConfig {
     },
     lipsync: { ...base.lipsync, ...(override.lipsync ?? {}) },
     buttonMap: { ...base.buttonMap, ...(override.buttonMap ?? {}) },
+    keyboardMap: { ...base.keyboardMap, ...(override.keyboardMap ?? {}) },
     characters: override.characters ?? base.characters,
     lastState: override.lastState ?? base.lastState,
   };

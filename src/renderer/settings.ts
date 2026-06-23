@@ -1,12 +1,13 @@
 import { ipcRenderer } from 'electron';
 import * as path from 'path';
-import { AppConfig, ButtonMap, CharacterConfig, CostumeConfig } from '../types';
+import { AppConfig, ButtonMap, KeyboardMap, CharacterConfig, CostumeConfig } from '../types';
 
 let config: AppConfig;
 let appRoot: string;
 let currentCharacterIdx = 0;
 let currentCostumeIdx = 0;
 let localButtonMap: ButtonMap;
+let localKeyboardMap: KeyboardMap;
 
 // ---- Helpers ----
 function el<T extends HTMLElement>(id: string): T {
@@ -87,6 +88,7 @@ function collect(): AppConfig {
   return {
     ...config,
     buttonMap: { ...localButtonMap },
+    keyboardMap: { ...localKeyboardMap },
     window: {
       width: parseInt(getVal('winWidth')) || 1920,
       height: parseInt(getVal('winHeight')) || 1080,
@@ -222,6 +224,38 @@ function startGpPolling(): void {
   setInterval(update, 500);
 }
 
+// ---- Key code labels ----
+const KEY_CODE_LABELS: Record<string, string> = {
+  ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓',
+  Space: 'Space', Enter: 'Enter', Escape: 'Esc', Tab: 'Tab',
+  Backspace: 'BS', Delete: 'Del', Insert: 'Ins',
+  Home: 'Home', End: 'End', PageUp: 'PgUp', PageDown: 'PgDn',
+  ShiftLeft: 'L-Shift', ShiftRight: 'R-Shift',
+  ControlLeft: 'L-Ctrl', ControlRight: 'R-Ctrl',
+  AltLeft: 'L-Alt', AltRight: 'R-Alt',
+  BracketLeft: '[', BracketRight: ']',
+  Comma: ',', Period: '.', Slash: '/', Backslash: '\\',
+  Semicolon: ';', Quote: "'", Backquote: '`',
+  Minus: '-', Equal: '=',
+  Digit0: '0', Digit1: '1', Digit2: '2', Digit3: '3', Digit4: '4',
+  Digit5: '5', Digit6: '6', Digit7: '7', Digit8: '8', Digit9: '9',
+  KeyA: 'A', KeyB: 'B', KeyC: 'C', KeyD: 'D', KeyE: 'E',
+  KeyF: 'F', KeyG: 'G', KeyH: 'H', KeyI: 'I', KeyJ: 'J',
+  KeyK: 'K', KeyL: 'L', KeyM: 'M', KeyN: 'N', KeyO: 'O',
+  KeyP: 'P', KeyQ: 'Q', KeyR: 'R', KeyS: 'S', KeyT: 'T',
+  KeyU: 'U', KeyV: 'V', KeyW: 'W', KeyX: 'X', KeyY: 'Y', KeyZ: 'Z',
+  F1: 'F1', F2: 'F2', F3: 'F3', F4: 'F4', F5: 'F5', F6: 'F6',
+  F7: 'F7', F8: 'F8', F9: 'F9', F10: 'F10', F11: 'F11', F12: 'F12',
+  NumpadEnter: 'Num↵', Numpad0: 'Num0', Numpad1: 'Num1', Numpad2: 'Num2',
+  Numpad3: 'Num3', Numpad4: 'Num4', Numpad5: 'Num5', Numpad6: 'Num6',
+  Numpad7: 'Num7', Numpad8: 'Num8', Numpad9: 'Num9',
+  NumpadAdd: 'Num+', NumpadSubtract: 'Num-', NumpadMultiply: 'Num*', NumpadDivide: 'Num/',
+};
+
+function keyLabel(code: string): string {
+  return KEY_CODE_LABELS[code] ?? code;
+}
+
 // ---- Button mapping ----
 const XBOX_BUTTON_NAMES: Record<number, string> = {
   0: 'A', 1: 'B', 2: 'X', 3: 'Y',
@@ -310,6 +344,87 @@ function buildButtonMapTable(): void {
     btn.className = 'btn-assign';
     btn.textContent = xboxBtnLabel(localButtonMap[key]);
     btn.onclick = () => startCapture(key, btn);
+    tdBtn.appendChild(btn);
+    tr.appendChild(tdLabel);
+    tr.appendChild(tdBtn);
+    table.appendChild(tr);
+  });
+}
+
+// ---- Keyboard mapping ----
+const KB_MAP_LABELS: { key: keyof KeyboardMap; label: string }[] = [
+  { key: 'moveLeft',      label: '移動 ←' },
+  { key: 'moveRight',     label: '移動 →' },
+  { key: 'moveUp',        label: '移動 ↑' },
+  { key: 'moveDown',      label: '移動 ↓' },
+  { key: 'expr1',         label: '表情1' },
+  { key: 'expr2',         label: '表情2' },
+  { key: 'expr3',         label: '表情3' },
+  { key: 'expr4',         label: '表情4' },
+  { key: 'expr5',         label: '表情5' },
+  { key: 'toggleFloat',   label: 'フワフワ ON/OFF' },
+  { key: 'toggleLipSync', label: '口パク ON/OFF' },
+  { key: 'resetHold',     label: 'リセット長押し' },
+  { key: 'openSettings',  label: '設定を開く' },
+  { key: 'prevCostume',   label: '衣装←' },
+  { key: 'nextCostume',   label: '衣装→' },
+  { key: 'prevCharacter', label: 'キャラ↑' },
+  { key: 'nextCharacter', label: 'キャラ↓' },
+];
+
+let kbCaptureKey: keyof KeyboardMap | null = null;
+let kbCaptureBtn: HTMLButtonElement | null = null;
+let kbCaptureTimeoutId: number | null = null;
+
+function cancelKbCapture(): void {
+  if (kbCaptureTimeoutId !== null) clearTimeout(kbCaptureTimeoutId);
+  if (kbCaptureBtn && kbCaptureKey !== null) {
+    kbCaptureBtn.classList.remove('listening');
+    kbCaptureBtn.textContent = keyLabel(localKeyboardMap[kbCaptureKey]);
+  }
+  kbCaptureKey = null;
+  kbCaptureBtn = null;
+  kbCaptureTimeoutId = null;
+}
+
+function startKbCapture(key: keyof KeyboardMap, btn: HTMLButtonElement): void {
+  cancelKbCapture();
+  kbCaptureKey = key;
+  kbCaptureBtn = btn;
+  btn.textContent = '押して...';
+  btn.classList.add('listening');
+
+  const onKeyDown = (e: KeyboardEvent): void => {
+    e.preventDefault();
+    if (!kbCaptureKey) return;
+    localKeyboardMap[kbCaptureKey] = e.code;
+    btn.textContent = keyLabel(e.code);
+    btn.classList.remove('listening');
+    kbCaptureKey = null;
+    kbCaptureBtn = null;
+    if (kbCaptureTimeoutId !== null) clearTimeout(kbCaptureTimeoutId);
+    window.removeEventListener('keydown', onKeyDown, true);
+  };
+
+  window.addEventListener('keydown', onKeyDown, true);
+  kbCaptureTimeoutId = window.setTimeout(() => {
+    window.removeEventListener('keydown', onKeyDown, true);
+    cancelKbCapture();
+  }, 5000);
+}
+
+function buildKeyboardMapTable(): void {
+  const table = el('kbMapTable');
+  table.innerHTML = '';
+  KB_MAP_LABELS.forEach(({ key, label }) => {
+    const tr = document.createElement('tr');
+    const tdLabel = document.createElement('td');
+    tdLabel.textContent = label;
+    const tdBtn = document.createElement('td');
+    const btn = document.createElement('button');
+    btn.className = 'btn-assign';
+    btn.textContent = keyLabel(localKeyboardMap[key]);
+    btn.onclick = () => startKbCapture(key, btn);
     tdBtn.appendChild(btn);
     tr.appendChild(tdLabel);
     tr.appendChild(tdBtn);
@@ -537,12 +652,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   ]);
 
   localButtonMap = { ...config.buttonMap };
+  localKeyboardMap = { ...config.keyboardMap };
 
   populate();
   loadMicDevices();
   startMicIndicator();
   startGpPolling();
   buildButtonMapTable();
+  buildKeyboardMapTable();
   renderCharacterCard();
 
   document.querySelectorAll<HTMLInputElement>('input[type=range]').forEach(s => {
@@ -553,6 +670,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   el('refreshGamepads')?.addEventListener('click', populateGamepadList);
+  el('openMonitorBtn')?.addEventListener('click', () => ipcRenderer.invoke('open-monitor'));
   el('addCharBtn').addEventListener('click', addCharacter);
   el('addCostumeBtn').addEventListener('click', addCostume);
   el('saveBtn').addEventListener('click', () => save());

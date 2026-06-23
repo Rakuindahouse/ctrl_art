@@ -2,7 +2,8 @@ import { ipcRenderer } from 'electron';
 import { AppConfig } from '../types';
 import { ImageLoader } from './imageLoader';
 import { CharacterManager } from './characterManager';
-import { GamepadManager } from './gamepadManager';
+import { GamepadManager, GamepadActions } from './gamepadManager';
+import { KeyboardManager } from './keyboardManager';
 import { AnimationEngine } from './animationEngine';
 import { LipSyncEngine } from './lipSyncEngine';
 
@@ -23,6 +24,7 @@ let appRoot: string;
 let imgLoader: ImageLoader;
 let charMgr: CharacterManager;
 let gamepadMgr: GamepadManager;
+let keyboardMgr: KeyboardManager;
 let animEng: AnimationEngine;
 let lipSync: LipSyncEngine;
 
@@ -79,6 +81,7 @@ async function init(): Promise<void> {
   charMgr = new CharacterManager(config, imgLoader);
   gamepadMgr = new GamepadManager(config.gamepad.deadzone, config.gamepad.gamepadIndex ?? -1);
   gamepadMgr.updateButtonMap(config.buttonMap);
+  keyboardMgr = new KeyboardManager(config.keyboardMap);
   animEng = new AnimationEngine(config.animation, config.animation.float.enabled);
   lipSync = new LipSyncEngine(config.lipsync);
 
@@ -106,6 +109,7 @@ async function init(): Promise<void> {
     gamepadMgr.setDeadzone(newCfg.gamepad.deadzone);
     gamepadMgr.setGamepadIndex(newCfg.gamepad.gamepadIndex ?? -1);
     gamepadMgr.updateButtonMap(newCfg.buttonMap);
+    keyboardMgr.updateKeyboardMap(newCfg.keyboardMap);
     animEng.updateConfig(newCfg.animation);
     lipSync.updateConfig(newCfg.lipsync);
 
@@ -127,9 +131,31 @@ async function init(): Promise<void> {
   requestAnimationFrame(loop);
 }
 
+function reportAction(label: string, category: 'expr' | 'system'): void {
+  ipcRenderer.send('input-action', label, category);
+}
+
+function mergeActions(gp: GamepadActions, kb: GamepadActions): GamepadActions {
+  return {
+    moveX: gp.moveX || kb.moveX,
+    moveY: gp.moveY || kb.moveY,
+    scaleX: gp.scaleX || kb.scaleX,
+    scaleY: gp.scaleY || kb.scaleY,
+    expression: gp.expression ?? kb.expression,
+    toggleFloat: gp.toggleFloat || kb.toggleFloat,
+    toggleLipSync: gp.toggleLipSync || kb.toggleLipSync,
+    resetHeld: gp.resetHeld || kb.resetHeld,
+    openSettings: gp.openSettings || kb.openSettings,
+    prevCostume: gp.prevCostume || kb.prevCostume,
+    nextCostume: gp.nextCostume || kb.nextCostume,
+    prevCharacter: gp.prevCharacter || kb.prevCharacter,
+    nextCharacter: gp.nextCharacter || kb.nextCharacter,
+  };
+}
+
 // ---- Main loop ----
 function loop(ts: number): void {
-  const actions = gamepadMgr.poll();
+  const actions = mergeActions(gamepadMgr.poll(), keyboardMgr.poll());
 
   // Movement (left stick)
   pos.x += actions.moveX * config.gamepad.moveSpeed;
@@ -141,8 +167,8 @@ function loop(ts: number): void {
   scale.y = newScale;
 
   // Costume switch (D-Pad left/right)
-  if (actions.prevCostume) { charMgr.prevCostume(); showStatus(`衣装← ${charMgr.getCostume()?.id}`); }
-  if (actions.nextCostume) { charMgr.nextCostume(); showStatus(`衣装→ ${charMgr.getCostume()?.id}`); }
+  if (actions.prevCostume) { charMgr.prevCostume(); const lbl = `衣装← ${charMgr.getCostume()?.id}`; showStatus(lbl); reportAction(lbl, 'system'); }
+  if (actions.nextCostume) { charMgr.nextCostume(); const lbl = `衣装→ ${charMgr.getCostume()?.id}`; showStatus(lbl); reportAction(lbl, 'system'); }
 
   // Character switch (D-Pad up/down)
   if (actions.prevCharacter || actions.nextCharacter) {
@@ -150,25 +176,33 @@ function loop(ts: number): void {
     else charMgr.nextCharacter();
     const ch = charMgr.getCharacter();
     if (ch) { pos = { ...ch.defaultPosition }; scale = { ...(ch.defaultScale ?? { x: 1, y: 1 }) }; }
-    showStatus(`キャラ: ${ch?.name ?? '?'}`);
+    const lbl = `キャラ: ${ch?.name ?? '?'}`;
+    showStatus(lbl);
+    reportAction(lbl, 'system');
   }
 
   // Expression buttons — set base expression directly, overlays are drawn on top
   if (actions.expression !== null) {
     charMgr.setExpression(actions.expression);
-    showStatus(`表情 ${actions.expression + 1}`);
+    const lbl = `表情 ${actions.expression + 1}`;
+    showStatus(lbl);
+    reportAction(lbl, 'expr');
   }
 
   // Float toggle (R1/RB)
   if (actions.toggleFloat) {
     animEng.toggle();
-    showStatus(`フワフワ: ${animEng.isEnabled() ? 'ON' : 'OFF'}`);
+    const lbl = `フワフワ: ${animEng.isEnabled() ? 'ON' : 'OFF'}`;
+    showStatus(lbl);
+    reportAction(lbl, 'system');
   }
 
   // Lip-sync toggle
   if (actions.toggleLipSync) {
     lipSyncActive = !lipSyncActive;
-    showStatus(`口パク: ${lipSyncActive ? 'ON' : 'OFF'}`);
+    const lbl = `口パク: ${lipSyncActive ? 'ON' : 'OFF'}`;
+    showStatus(lbl);
+    reportAction(lbl, 'system');
   }
 
   // Position reset (L2/LT long hold ~800ms)
@@ -179,6 +213,7 @@ function loop(ts: number): void {
         const ch = charMgr.getCharacter();
         if (ch) { pos = { ...ch.defaultPosition }; scale = { ...(ch.defaultScale ?? { x: 1, y: 1 }) }; }
         showStatus('位置リセット');
+        reportAction('位置リセット', 'system');
         resetHolding = false;
         resetTimer = null;
       }, 800);

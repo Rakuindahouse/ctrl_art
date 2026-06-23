@@ -63,6 +63,26 @@ export interface ButtonMap {
   nextCharacter: number;
 }
 
+export interface KeyboardMap {
+  moveLeft: string;
+  moveRight: string;
+  moveUp: string;
+  moveDown: string;
+  expr1: string;
+  expr2: string;
+  expr3: string;
+  expr4: string;
+  expr5: string;
+  toggleFloat: string;
+  toggleLipSync: string;
+  resetHold: string;
+  openSettings: string;
+  prevCostume: string;
+  nextCostume: string;
+  prevCharacter: string;
+  nextCharacter: string;
+}
+
 export interface CharacterConfig {
   id: string;
   name: string;
@@ -87,6 +107,7 @@ export interface AppConfig {
   animation: AnimationConfig;
   lipsync: LipSyncConfig;
   buttonMap: ButtonMap;
+  keyboardMap: KeyboardMap;
   characters: CharacterConfig[];
   lastState?: LastState;
 }
